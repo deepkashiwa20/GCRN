@@ -13,7 +13,6 @@ An implementation of GCRN backbone.
 * For PEMSBAY dataset, please first upzip ./PEMSBAY/pems-bay.zip to get ./PEMSBAY/pems-bay.h5 file.
 * Two trainers, one is traintest_GCRN.py inherited from [GTS](https://github.com/chaoshangcs/GTS), another is traintest+_GCRN.py.
 * For traintest_GCRN.py, please first run: python generate_training_data.py --dataset=DATA
-* You can run our model by:
-** cd model
-** python traintest_GCRN.py or traintest+_GCRN.py --dataset=DATA --gpu=GPU_DEVICE_ID 
-** DATA = {METRLA, PEMSBAY}
+* cd model
+* python traintest_GCRN.py or traintest+_GCRN.py --dataset=DATA --gpu=GPU_DEVICE_ID 
+* DATA = {METRLA, PEMSBAY}
