@@ -12,6 +12,7 @@ An implementation of GCRN backbone.
 #### Preparation
 * For PEMSBAY dataset, please first upzip ./PEMSBAY/pems-bay.zip to get ./PEMSBAY/pems-bay.h5 file.
 * Two trainers, one is traintest_GCRN.py inherited from [GTS](https://github.com/chaoshangcs/GTS), another is traintest+_GCRN.py.
+* But traintest_GCRN.py may have a small bug as reported [here](https://github.com/deepkashiwa20/MegaCRN/issues/1#issuecomment-1445274957).
 * For traintest_GCRN.py, please first run: python generate_training_data.py --dataset=DATA
 
 #### Running
