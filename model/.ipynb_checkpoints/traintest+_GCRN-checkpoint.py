@@ -80,7 +80,7 @@ def get_model(mode):
     return model
 
 def evaluate_model(model, data_iter):
-    criterion = masked_mae_loss # masked_mae(preds, labels, null_val=1e-3) or masked_mae_loss(y_pred, y_true)
+    criterion = masked_mae # or # masked_mae_loss(y_pred, y_true)
     model.eval()
     loss_sum, n, ys_pred = 0.0, 0, []
     with torch.no_grad():
@@ -110,7 +110,7 @@ def train_model(name, mode, xs, ys, ycov):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, eps=args.epsilon)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.steps, gamma=args.lr_decay_ratio)
     
-    criterion = masked_mae_loss # masked_mae(preds, labels, null_val=1e-3) or masked_mae_loss(y_pred, y_true)
+    criterion = masked_mae # or # masked_mae_loss(y_pred, y_true)
         
     min_val_loss = np.inf
     wait = 0   
