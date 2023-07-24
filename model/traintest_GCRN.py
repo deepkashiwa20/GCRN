@@ -26,8 +26,8 @@ def print_model(model):
 
 def get_model():  
     model = GCRN(num_nodes=args.num_nodes, input_dim=args.input_dim, output_dim=args.output_dim, horizon=args.horizon, 
-                    rnn_units=args.rnn_units, num_layers=args.num_rnn_layers, cheb_k = args.max_diffusion_step,
-                    cl_decay_steps=args.cl_decay_steps, use_curriculum_learning=args.use_curriculum_learning).to(device)
+                 rnn_units=args.rnn_units, num_layers=args.num_rnn_layers, embed_dim=args.embed_dim, cheb_k = args.max_diffusion_step, 
+                 cl_decay_steps=args.cl_decay_steps, use_curriculum_learning=args.use_curriculum_learning).to(device)
     return model
 
 def prepare_x_y(x, y):
@@ -46,53 +46,46 @@ def prepare_x_y(x, y):
     y0 = torch.from_numpy(y0).float()
     y1 = torch.from_numpy(y1).float()
     return x0.to(device), y0.to(device), y1.to(device) # x, y, y_cov
-    
+
 def evaluate(model, mode):
     with torch.no_grad():
         model = model.eval()
         data_iter =  data[f'{mode}_loader'].get_iterator()
-        losses = []
         ys_true, ys_pred = [], []
-        maes, mapes, mses = [], [], []
-        l_3, m_3, r_3 = [], [], []
-        l_6, m_6, r_6 = [], [], []
-        l_12, m_12, r_12 = [], [], []
         for x, y in data_iter:
             x, y, ycov = prepare_x_y(x, y)
             output = model(x, ycov)
             y_pred = scaler.inverse_transform(output)
             y_true = scaler.inverse_transform(y)
-            loss = masked_mae_loss(y_pred, y_true) # masked_mae_loss(y_pred, y_true)
-            losses.append(loss.item())
-            # Followed the DCRNN TensorFlow Implementation
-            maes.append(masked_mae_loss(y_pred, y_true).item())
-            mapes.append(masked_mape_loss(y_pred, y_true).item())
-            mses.append(masked_mse_loss(y_pred, y_true).item())
-            # Important for MegaCRN model to let T come first.
-            y_true, y_pred = y_true.permute(1, 0, 2, 3), y_pred.permute(1, 0, 2, 3)
-            l_3.append(masked_mae_loss(y_pred[2:3], y_true[2:3]).item())
-            m_3.append(masked_mape_loss(y_pred[2:3], y_true[2:3]).item())
-            r_3.append(masked_mse_loss(y_pred[2:3], y_true[2:3]).item())
-            l_6.append(masked_mae_loss(y_pred[5:6], y_true[5:6]).item())
-            m_6.append(masked_mape_loss(y_pred[5:6], y_true[5:6]).item())
-            r_6.append(masked_mse_loss(y_pred[5:6], y_true[5:6]).item())
-            l_12.append(masked_mae_loss(y_pred[11:12], y_true[11:12]).item())
-            m_12.append(masked_mape_loss(y_pred[11:12], y_true[11:12]).item())
-            r_12.append(masked_mse_loss(y_pred[11:12], y_true[11:12]).item())
             ys_true.append(y_true)
             ys_pred.append(y_pred)
-        mean_loss = np.mean(losses)
-        mean_mae, mean_mape, mean_rmse = np.mean(maes), np.mean(mapes), np.sqrt(np.mean(mses))
-        l_3, m_3, r_3 = np.mean(l_3), np.mean(m_3), np.sqrt(np.mean(r_3))
-        l_6, m_6, r_6 = np.mean(l_6), np.mean(m_6), np.sqrt(np.mean(r_6))
-        l_12, m_12, r_12 = np.mean(l_12), np.mean(m_12), np.sqrt(np.mean(r_12))
+        y_size = data[f'y_{mode}'].shape[0]
+        ys_true, ys_pred = torch.cat(ys_true, dim=0)[:y_size], torch.cat(ys_pred, dim=0)[:y_size]
+        loss = masked_mae_loss(ys_pred, ys_true)
+
         if mode == 'test':
-            logger.info('Horizon overall: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(mean_mae, mean_mape, mean_rmse))
-            logger.info('Horizon 15mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(l_3, m_3, r_3))
-            logger.info('Horizon 30mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(l_6, m_6, r_6))
-            logger.info('Horizon 60mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(l_12, m_12, r_12))
-        return mean_loss, ys_true, ys_pred
+            ys_true, ys_pred = ys_true.permute(1, 0, 2, 3), ys_pred.permute(1, 0, 2, 3)
+            mae = masked_mae_loss(ys_pred, ys_true).item()
+            mape = masked_mape_loss(ys_pred, ys_true).item()
+            rmse = masked_rmse_loss(ys_pred, ys_true).item()
+            mae_3 = masked_mae_loss(ys_pred[2:3], ys_true[2:3]).item()
+            mape_3 = masked_mape_loss(ys_pred[2:3], ys_true[2:3]).item()
+            rmse_3 = masked_rmse_loss(ys_pred[2:3], ys_true[2:3]).item()
+            mae_6 = masked_mae_loss(ys_pred[5:6], ys_true[5:6]).item()
+            mape_6 = masked_mape_loss(ys_pred[5:6], ys_true[5:6]).item()
+            rmse_6 = masked_rmse_loss(ys_pred[5:6], ys_true[5:6]).item()
+            mae_12 = masked_mae_loss(ys_pred[11:12], ys_true[11:12]).item()
+            mape_12 = masked_mape_loss(ys_pred[11:12], ys_true[11:12]).item()
+            rmse_12 = masked_rmse_loss(ys_pred[11:12], ys_true[11:12]).item()
+            logger.info('Horizon overall: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(mae, mape, rmse))
+            logger.info('Horizon 15mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(mae_3, mape_3, rmse_3))
+            logger.info('Horizon 30mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(mae_6, mape_6, rmse_6))
+            logger.info('Horizon 60mins: mae: {:.4f}, mape: {:.4f}, rmse: {:.4f}'.format(mae_12, mape_12, rmse_12))
+            ys_true, ys_pred = ys_true.permute(1, 0, 2, 3), ys_pred.permute(1, 0, 2, 3)
         
+        return loss, ys_true, ys_pred
+
+    
 def traintest_model():  
     model = get_model()
     print_model(model)
@@ -121,13 +114,12 @@ def traintest_model():
         train_loss = np.mean(losses)
         lr_scheduler.step()
         val_loss, _, _ = evaluate(model, 'val')
-        # if (epoch_num % args.test_every_n_epochs) == args.test_every_n_epochs - 1:
         end_time2 = time.time()
         message = 'Epoch [{}/{}] ({}) train_loss: {:.4f}, val_loss: {:.4f}, lr: {:.6f}, {:.1f}s'.format(epoch_num + 1, 
                    args.epochs, batches_seen, train_loss, val_loss, optimizer.param_groups[0]['lr'], (end_time2 - start_time))
         logger.info(message)
         test_loss, _, _ = evaluate(model, 'test')
-        
+
         if val_loss < min_val_loss:
             wait = 0
             min_val_loss = val_loss
@@ -154,6 +146,7 @@ parser.add_argument('--seq_len', type=int, default=12, help='input sequence leng
 parser.add_argument('--horizon', type=int, default=12, help='output sequence length')
 parser.add_argument('--input_dim', type=int, default=1, help='number of input channel')
 parser.add_argument('--output_dim', type=int, default=1, help='number of output channel')
+parser.add_argument('--embed_dim', type=int, default=8, help='embedding dimension for adaptive graph')
 parser.add_argument('--max_diffusion_step', type=int, default=3, help='max diffusion step or Cheb K')
 parser.add_argument('--num_rnn_layers', type=int, default=1, help='number of rnn layers')
 parser.add_argument('--rnn_units', type=int, default=64, help='number of rnn units')
@@ -168,7 +161,6 @@ parser.add_argument("--epsilon", type=float, default=1e-3, help="optimizer epsil
 parser.add_argument("--max_grad_norm", type=int, default=5, help="max_grad_norm")
 parser.add_argument("--use_curriculum_learning", type=eval, choices=[True, False], default='True', help="use_curriculum_learning")
 parser.add_argument("--cl_decay_steps", type=int, default=2000, help="cl_decay_steps")
-parser.add_argument('--test_every_n_epochs', type=int, default=5, help='test_every_n_epochs')
 parser.add_argument('--gpu', type=int, default=0, help='which gpu to use')
 # parser.add_argument('--seed', type=int, default=100, help='random seed.')
 args = parser.parse_args()
@@ -221,6 +213,7 @@ logger.info('seq_len', args.seq_len)
 logger.info('horizon', args.horizon)
 logger.info('input_dim', args.input_dim)
 logger.info('output_dim', args.output_dim)
+logger.info('embed_dim', args.embed_dim)
 logger.info('num_rnn_layers', args.num_rnn_layers)
 logger.info('rnn_units', args.rnn_units)
 logger.info('max_diffusion_step', args.max_diffusion_step)
@@ -233,6 +226,7 @@ logger.info('epsilon', args.epsilon)
 logger.info('steps', args.steps)
 logger.info('lr_decay_ratio', args.lr_decay_ratio)
 logger.info('use_curriculum_learning', args.use_curriculum_learning)
+logger.info('cl_decay_steps', args.cl_decay_steps)
 
 cpu_num = 1
 os.environ ['OMP_NUM_THREADS'] = str(cpu_num)
