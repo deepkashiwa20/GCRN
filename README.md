@@ -11,12 +11,13 @@ An implementation of GCRN backbone.
 
 #### Preparation
 * For PEMSBAY dataset, please first upzip ./PEMSBAY/pems-bay.zip to get ./PEMSBAY/pems-bay.h5 file.
-* Trainer traintestgts_GCRN.py is inherited from [GTS](https://github.com/chaoshangcs/GTS).
-* Trainer traintest+_GCRN.py is inherited from [DL-Traff](https://github.com/deepkashiwa20/DL-Traff-Graph/blob/main/workMETRLA/pred_DCRNN.py).
-* Trainer traintest_GCRN.py fix the bug in traintestgts.py as reported [here](https://github.com/deepkashiwa20/MegaCRN/issues/1#issuecomment-1445274957).
 * For traintest_GCRN.py, please first run: python generate_training_data.py --dataset=DATA
+* GCRN.py only supports adaptive graph, contructed by single embedding vector, defaulted as (N, 8).
+** Trainer traintestgts_GCRN.py is inherited from [GTS](https://github.com/chaoshangcs/GTS).
+** Trainer traintest+_GCRN.py is inherited from [DL-Traff](https://github.com/deepkashiwa20/DL-Traff-Graph/blob/main/workMETRLA/pred_DCRNN.py).
+** Trainer traintest_GCRN.py fix the bug in traintestgts.py as reported [here](https://github.com/deepkashiwa20/MegaCRN/issues/1#issuecomment-1445274957).
 * MCRN.py supports multi graphs (adjacency graph and/or adaptive graph).
-* Trainer traintest_MCRN.py follows traintest_GCRN.py.
+** Trainer traintest_MCRN.py follows traintest_GCRN.py.
 
 #### Running
 * cd model
