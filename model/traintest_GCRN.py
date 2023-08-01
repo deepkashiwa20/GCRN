@@ -26,7 +26,7 @@ def print_model(model):
 
 def get_model():  
     model = GCRN(num_nodes=args.num_nodes, input_dim=args.input_dim, output_dim=args.output_dim, horizon=args.horizon, 
-                 rnn_units=args.rnn_units, num_layers=args.num_rnn_layers, embed_dim=args.embed_dim, cheb_k = args.max_diffusion_step, 
+                 rnn_units=args.rnn_units, rnn_layers=args.rnn_layers, embed_dim=args.embed_dim, cheb_k = args.max_diffusion_step, 
                  cl_decay_steps=args.cl_decay_steps, use_curriculum_learning=args.use_curriculum_learning).to(device)
     return model
 
@@ -148,7 +148,7 @@ parser.add_argument('--input_dim', type=int, default=1, help='number of input ch
 parser.add_argument('--output_dim', type=int, default=1, help='number of output channel')
 parser.add_argument('--embed_dim', type=int, default=8, help='embedding dimension for adaptive graph')
 parser.add_argument('--max_diffusion_step', type=int, default=3, help='max diffusion step or Cheb K')
-parser.add_argument('--num_rnn_layers', type=int, default=1, help='number of rnn layers')
+parser.add_argument('--rnn_layers', type=int, default=1, help='number of rnn layers')
 parser.add_argument('--rnn_units', type=int, default=64, help='number of rnn units')
 parser.add_argument("--loss", type=str, default='mask_mae_loss', help="mask_mae_loss")
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
@@ -213,9 +213,9 @@ logger.info('seq_len', args.seq_len)
 logger.info('horizon', args.horizon)
 logger.info('input_dim', args.input_dim)
 logger.info('output_dim', args.output_dim)
-logger.info('embed_dim', args.embed_dim)
-logger.info('num_rnn_layers', args.num_rnn_layers)
+logger.info('rnn_layers', args.rnn_layers)
 logger.info('rnn_units', args.rnn_units)
+logger.info('embed_dim', args.embed_dim)
 logger.info('max_diffusion_step', args.max_diffusion_step)
 logger.info('loss', args.loss)
 logger.info('batch_size', args.batch_size)
